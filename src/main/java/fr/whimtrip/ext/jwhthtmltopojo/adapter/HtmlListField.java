@@ -81,7 +81,7 @@ public class HtmlListField<T> extends AbstractHtmlFieldImpl<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <V> List<V> populateList(HtmlToPojoEngine htmlToPojoEngine, Elements nodes, Class<V> listClazz, T parentObj, HtmlDifferentiator<V> differentiator)
+    private <V> List<V> populateList(HtmlToPojoEngine htmlToPojoEngine, Elements nodes, Class<? extends V> listClazz, T parentObj, HtmlDifferentiator differentiator)
             throws ParseException, ConversionException {
         List<V> newInstanceList = new ArrayList<>();
 
@@ -90,17 +90,16 @@ public class HtmlListField<T> extends AbstractHtmlFieldImpl<T> {
 
         for (Element node : nodes) {
             Class<? extends V> aClass = getClass(listClazz, differentiator, node);
-
+            if (aClass == null) continue;
             if (HtmlToPojoUtils.isSimple(aClass)) {
                 newInstanceList.add(instanceForNode(node, aClass, parentObj));
             } else {
-                HtmlAdapter<V> htmlAdapter = (HtmlAdapter<V>) getHtmlAdapter(aClass, htmlToPojoEngine);
-
                 AcceptObjectIf acceptObjectIf = getField().getAnnotation(AcceptObjectIf.class);
                 boolean alwaysFetch = acceptObjectIf == null;
 
                 if (alwaysFetch || innerShoudlBeFetched(node, parentObj, acceptObjectIf, resolverCache)) {
-                    newInstanceList.add(htmlAdapter.loadFromNode(node, htmlAdapter.createNewInstance(parentObj)));
+                    V node1 = htmlToPojoEngine.adapter(aClass).loadFromNode(node);
+                    newInstanceList.add(node1);
                 }
             }
         }
@@ -112,12 +111,5 @@ public class HtmlListField<T> extends AbstractHtmlFieldImpl<T> {
             return differentiator.differentiate(node);
         }
         return listClazz;
-    }
-
-    @SuppressWarnings("unchecked")
-    private HtmlAdapter getHtmlAdapter(Class listClazz, HtmlToPojoEngine htmlToPojoEngine) {
-        if (innerAdapter == null)
-            innerAdapter = htmlToPojoEngine.adapter(listClazz);
-        return innerAdapter;
     }
 }
