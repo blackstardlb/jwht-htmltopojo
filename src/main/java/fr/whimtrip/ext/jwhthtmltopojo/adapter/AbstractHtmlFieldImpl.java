@@ -10,10 +10,7 @@ import fr.whimtrip.ext.jwhthtmltopojo.HtmlToPojoUtils;
 import fr.whimtrip.ext.jwhthtmltopojo.annotation.AcceptObjectIf;
 import fr.whimtrip.ext.jwhthtmltopojo.annotation.Selector;
 import fr.whimtrip.ext.jwhthtmltopojo.exception.*;
-import fr.whimtrip.ext.jwhthtmltopojo.intrf.AcceptIfResolver;
-import fr.whimtrip.ext.jwhthtmltopojo.intrf.HtmlDeserializer;
-import fr.whimtrip.ext.jwhthtmltopojo.intrf.HtmlDifferentiator;
-import fr.whimtrip.ext.jwhthtmltopojo.intrf.HtmlField;
+import fr.whimtrip.ext.jwhthtmltopojo.intrf.*;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -194,6 +191,9 @@ public abstract class AbstractHtmlFieldImpl<T> implements HtmlField<T> {
 
         if(useDeserializer && postConvert)
         {
+            if (deserializer instanceof HtmlNodeDeserializer) {
+                return ((HtmlNodeDeserializer<U>) deserializer).deserializePostConversion(value, node);
+            }
             return deserializer.deserializePostConversion(value);
         }
         try {
@@ -282,13 +282,13 @@ public abstract class AbstractHtmlFieldImpl<T> implements HtmlField<T> {
         if (selectParent)
         {
             Element newParent = parent.parent();
-            
+
             if (newParent != null)
             {
                 parent = newParent;
             }
         }
-        
+
         if(cssQuery ==  null || cssQuery.length() < 1)
             return parent;
 
